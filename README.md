@@ -1,1 +1,1 @@
-# ogm-msa-actor
+See ogm-startkit
