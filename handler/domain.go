@@ -15,9 +15,15 @@ func (this *Domain) Create(_ctx context.Context, _req *proto.DomainCreateRequest
 	logger.Infof("Received Domain.Create request: %v", _req)
 	_rsp.Status = &proto.Status{}
 
+	if "" == _req.Name {
+		_rsp.Status.Code = 1
+		_rsp.Status.Message = "name is required"
+		return nil
+	}
+
 	dao := model.NewDomainDAO(nil)
 	if exists := dao.Exists(_req.Name); exists {
-		_rsp.Status.Code = 1
+		_rsp.Status.Code = 2
 		_rsp.Status.Message = "domain already exists"
 		return nil
 	}
@@ -28,7 +34,9 @@ func (this *Domain) Create(_ctx context.Context, _req *proto.DomainCreateRequest
 	}
 	err := dao.Insert(domain)
 	if nil != err {
-		return err
+		_rsp.Status.Code = -1
+		_rsp.Status.Message = err.Error()
+		return nil
 	}
 
 	return nil
@@ -38,10 +46,18 @@ func (this *Domain) Delete(_ctx context.Context, _req *proto.DomainDeleteRequest
 	logger.Infof("Received Domain.Delete request: %v", _req)
 	_rsp.Status = &proto.Status{}
 
+	if "" == _req.Uuid {
+		_rsp.Status.Code = 1
+		_rsp.Status.Message = "uuid is required"
+		return nil
+	}
+
 	dao := model.NewDomainDAO(nil)
 	err := dao.Delete(_req.Uuid)
 	if nil != err {
-		return err
+		_rsp.Status.Code = -1
+		_rsp.Status.Message = err.Error()
+		return nil
 	}
 
 	return nil
@@ -63,7 +79,9 @@ func (this *Domain) List(_ctx context.Context, _req *proto.ListRequest, _rsp *pr
 	dao := model.NewDomainDAO(nil)
 	domain, err := dao.List(offset, count)
 	if nil != err {
-		return err
+		_rsp.Status.Code = -1
+		_rsp.Status.Message = err.Error()
+		return nil
 	}
 
 	_rsp.Total = dao.Count()

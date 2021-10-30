@@ -7,6 +7,7 @@ import (
 	"ogm-actor/config"
 	"ogm-actor/handler"
 	"ogm-actor/model"
+	"ogm-actor/cache"
 	"os"
 	"path/filepath"
 	"time"
@@ -25,6 +26,9 @@ func main() {
     defer model.Cancel()
     model.AutoMigrateDatabase()
 
+    cache.Setup()
+    defer cache.Cancel()
+
 	// New Service
 	service := micro.NewService(
         micro.Server(grpc.NewServer()),
@@ -41,6 +45,7 @@ func main() {
 	// Register Handler
 	proto.RegisterHealthyHandler(service.Server(), new(handler.Healthy))
 	proto.RegisterDomainHandler(service.Server(), new(handler.Domain))
+	proto.RegisterSyncHandler(service.Server(), new(handler.Sync))
 
 	app, _ := filepath.Abs(os.Args[0])
 

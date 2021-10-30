@@ -23,10 +23,14 @@ type SQLite_ struct {
 }
 
 type MySQL_ struct {
-	Address  string `yaml:address`
-	User     string `yaml:user`
-	Password string `yaml:password`
-	DB       string `yaml:db`
+	Address      string `yaml:address`
+	User         string `yaml:user`
+	Password     string `yaml:password`
+	DB           string `yaml:db`
+	MaxIdleTime  int    `yaml:maxIdelTime`
+	MaxLifeTime  int    `yaml:maxLifeTime`
+	MaxIdleConns int    `yaml:maxIdleConns`
+	MaxOpenConns int    `yaml:maxOpenConns`
 }
 
 type Database_ struct {

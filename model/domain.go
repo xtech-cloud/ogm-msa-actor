@@ -3,12 +3,14 @@ package model
 import (
 	"errors"
 	"gorm.io/gorm"
+	"time"
 )
 
 type Domain struct {
-	Embedded gorm.Model `gorm:"embedded"`
-	UUID     string     `gorm:"column:uuid;type:char(32);not null;unique"`
-	Name     string     `gorm:"column:name;type:varchar(256);not null;unique"`
+	UUID      string `gorm:"column:uuid;type:char(32);primaryKey"`
+	Name      string `gorm:"column:name;type:varchar(256);not null;unique"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 var ErrDomainExists = errors.New("domain exists")

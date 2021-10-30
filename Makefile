@@ -32,11 +32,12 @@ call:
 	gomu --registry=etcd --client=grpc call xtc.ogm.actor Domain.Create '{"name":"test"}'
 	gomu --registry=etcd --client=grpc call xtc.ogm.actor Domain.List '{"offset":0, "count":5}'
 	gomu --registry=etcd --client=grpc call xtc.ogm.actor Domain.Execute '{"uuid":"${UUID}", "command":"reboot", "device":["0001", "0002"], "parameter":""}'
+	gomu --registry=etcd --client=grpc call xtc.ogm.actor Sync.Push '{"domain":"${UUID}", "device":{"serialNumber":"00001", "name":"G2", "operatingSystem":"Windows 11", "systemVersion":"21H2", "shape":"PC"}}'
 	gomu --registry=etcd --client=grpc call xtc.ogm.actor Domain.Delete '{"uuid":"${UUID}"}'
 
 .PHONY: post
 post:
-	curl -X POST -d '{"msg":"hello"}' 127.0.0.1:18810/ogm/actor/Healthy/Echo
+	curl -X POST -H 'Content-Type:application/json' -d '{"msg":"hello"}' 127.0.0.1/actor/Healthy/Echo
 
 .PHONY: benchmark
 benchmark:
