@@ -6,9 +6,9 @@
   },
   "openapi": "3.0.0",
   "paths": {
-    "/actor/Sync/Pull": {
+    "/ogm/actor/Sync/Pull": {
       "post": {
-        "operationId": "/actor/Sync/PullPOST",
+        "operationId": "/ogm/actor/Sync/PullPOST",
         "requestBody": {},
         "responses": {
           "default": {

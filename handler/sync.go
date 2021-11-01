@@ -60,7 +60,7 @@ func (this *Sync) Push(_ctx context.Context, _req *proto.SyncPushRequest, _rsp *
 		NetworkStrength:  _req.Device.NetworkStrength,
 		Program:          program,
 	}
-	profileUUID := model.ToUUID(_req.Domain + deviceUUID)
+	profileUUID := model.ToProfileUUID(_req.Domain, deviceUUID)
 
 	// 在缓存中查找
 	caoDevice := cache.NewDeviceCAO()

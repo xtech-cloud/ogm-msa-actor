@@ -21,6 +21,10 @@ type ProfileDAO struct {
 	conn *Conn
 }
 
+func ToProfileUUID(_domainUUID string, _deviceUUID string) string {
+	return ToUUID(_domainUUID + _deviceUUID)
+}
+
 func NewProfileDAO(_conn *Conn) *ProfileDAO {
 	conn := DefaultConn
 	if nil != _conn {
@@ -32,8 +36,8 @@ func NewProfileDAO(_conn *Conn) *ProfileDAO {
 }
 
 func (this *ProfileDAO) Insert(_profile *Profile) error {
-    db := this.conn.DB
-    return db.Create(_profile).Error
+	db := this.conn.DB
+	return db.Create(_profile).Error
 }
 
 func (this *ProfileDAO) Get(_uuid string) (*Profile, error) {
@@ -52,4 +56,10 @@ func (this *ProfileDAO) Exists(_uuid string) bool {
 	var count int64
 	db.Model(&Profile{}).Where("uuid = ?", _uuid).Count(&count)
 	return count > 0
+}
+
+func (this *ProfileDAO) UpdateAccess(_uuid string, _access int32) error {
+	db := this.conn.DB
+	res := db.Model(&Profile{}).Where("uuid = ?", _uuid).Update("access", _access)
+	return res.Error
 }

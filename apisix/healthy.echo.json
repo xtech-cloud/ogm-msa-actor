@@ -6,9 +6,9 @@
   },
   "openapi": "3.0.0",
   "paths": {
-    "/actor/Healthy/Echo": {
+    "/ogm/actor/Healthy/Echo": {
       "post": {
-        "operationId": "/actor/Healthy/EchoPOST",
+        "operationId": "/ogm/actor/Healthy/EchoPOST",
         "requestBody": {},
         "responses": {
           "default": {

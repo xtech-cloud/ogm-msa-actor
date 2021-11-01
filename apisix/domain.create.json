@@ -6,9 +6,9 @@
   },
   "openapi": "3.0.0",
   "paths": {
-    "/actor/Domain/Create": {
+    "/ogm/actor/Domain/Create": {
       "post": {
-        "operationId": "/actor/Domain/CreatePOST",
+        "operationId": "/ogm/actor/Domain/CreatePOST",
         "requestBody": {},
         "responses": {
           "default": {

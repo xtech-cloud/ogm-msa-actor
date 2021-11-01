@@ -6,9 +6,9 @@
   },
   "openapi": "3.0.0",
   "paths": {
-    "/actor/Domain/List": {
+    "/ogm/actor/Domain/List": {
       "post": {
-        "operationId": "/actor/Domain/ListPOST",
+        "operationId": "/ogm/actor/Domain/ListPOST",
         "requestBody": {},
         "responses": {
           "default": {

@@ -6,9 +6,9 @@
   },
   "openapi": "3.0.0",
   "paths": {
-    "/actor/Device/List": {
+    "/ogm/actor/Device/List": {
       "post": {
-        "operationId": "/actor/Device/ListPOST",
+        "operationId": "/ogm/actor/Device/ListPOST",
         "requestBody": {},
         "responses": {
           "default": {
