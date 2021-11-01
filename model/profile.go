@@ -7,8 +7,8 @@ import (
 
 type Profile struct {
 	UUID   string `gorm:"column:uuid;type:char(32);primaryKey"`
-	Domain string `gorm:"column:domain;type:char(32);not null"`
-	Device string `gorm:"column:device;type:char(32);not null"`
+	Domain string `gorm:"column:domain_uuid;type:char(32);not null"`
+	Device string `gorm:"column:device_uuid;type:char(32);not null"`
 	Alias  string `gorm:"column:alias;type:varchar(128);not null"`
 	Access int32  `gorm:"column:access;type:tinyint;not null;default:0"`
 }

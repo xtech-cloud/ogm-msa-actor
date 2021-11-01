@@ -72,5 +72,5 @@ func (this *DomainDAO) List(_offset int64, _count int64) ([]*Domain, error) {
 
 func (this *DomainDAO) Delete(_uuid string) error {
 	db := this.conn.DB
-	return db.Unscoped().Where("uuid = ?", _uuid).Delete(&Domain{}).Error
+	return db.Where("uuid = ?", _uuid).Delete(&Domain{}).Error
 }

@@ -71,3 +71,18 @@ func (this *DeviceDAO) FindBySN(_serialnumber string) (*Device, error) {
 	}
 	return &device, res.Error
 }
+
+func (this *DeviceDAO) Count() int64 {
+	db := this.conn.DB
+	var count int64
+	db.Model(&Device{}).Count(&count)
+	return count
+}
+
+func (this *DeviceDAO) List(_offset int64, _count int64) ([]*Device, error) {
+	db := this.conn.DB
+	var device []*Device
+	res := db.Offset(int(_offset)).Limit(int(_count)).Order("created_at desc").Find(&device)
+	return device, res.Error
+}
+

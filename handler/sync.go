@@ -35,6 +35,11 @@ func (this *Sync) Push(_ctx context.Context, _req *proto.SyncPushRequest, _rsp *
 		return nil
 	}
 
+	program := make(map[string]string)
+	for k, v := range _req.Device.Program {
+		program[k] = v
+	}
+
 	deviceUUID := model.ToUUID(_req.Device.SerialNumber)
 	device := &cache.Device{
 		Model: model.Device{
@@ -53,7 +58,7 @@ func (this *Sync) Push(_ctx context.Context, _req *proto.SyncPushRequest, _rsp *
 		StorageAvailable: _req.Device.StorageAvailable,
 		Network:          _req.Device.Network,
 		NetworkStrength:  _req.Device.NetworkStrength,
-		Program:          _req.Device.Program,
+		Program:          program,
 	}
 	profileUUID := model.ToUUID(_req.Domain + deviceUUID)
 
@@ -152,8 +157,9 @@ func (this *Sync) Push(_ctx context.Context, _req *proto.SyncPushRequest, _rsp *
 	_rsp.Access = profileInCache.Access
 	_rsp.Alias = profileInCache.Alias
 
+	_rsp.Property = make(map[string]string)
 	if nil != _req.DownProperty {
-		for k, _ := range _req.DownProperty {
+		for _, k := range _req.DownProperty {
 			v, ok, err := caoProperty.Find(k)
 			if nil != err {
 				_rsp.Status.Code = -1
@@ -173,5 +179,50 @@ func (this *Sync) Push(_ctx context.Context, _req *proto.SyncPushRequest, _rsp *
 
 func (this *Sync) Pull(_ctx context.Context, _req *proto.SyncPullRequest, _rsp *proto.SyncPullResponse) error {
 	logger.Infof("Received Sync.Pull request: %v", _req)
+	_rsp.Status = &proto.Status{}
+
+	if "" == _req.Domain {
+		_rsp.Status.Code = 1
+		_rsp.Status.Message = "domain is required"
+		return nil
+	}
+
+	dao := model.NewJoinDAO(nil)
+	device, err := dao.ListDeviceByDomain(_req.Domain)
+	if nil != err {
+		_rsp.Status.Code = -1
+		_rsp.Status.Message = err.Error()
+		return nil
+	}
+
+	_rsp.Device = make([]*proto.DeviceEntity, len(device))
+	for i := 0; i < len(device); i++ {
+		_rsp.Device[i] = &proto.DeviceEntity{
+			SerialNumber:    device[i].SerialNumber,
+			Name:            device[i].Name,
+			OperatingSystem: device[i].OperatingSystem,
+			SystemVersion:   device[i].SystemVersion,
+			Shape:           device[i].Shape,
+		}
+	}
+
+	_rsp.Property = make(map[string]string)
+	caoProperty := cache.NewPropertyCAO()
+	if nil != _req.DownProperty {
+		for _, k := range _req.DownProperty {
+			v, ok, err := caoProperty.Find(k)
+			if nil != err {
+				_rsp.Status.Code = -1
+				_rsp.Status.Message = err.Error()
+				return nil
+			}
+			// 仅返回存在的属性
+			if !ok {
+				continue
+			}
+			_rsp.Property[k] = v
+		}
+	}
+
 	return nil
 }
