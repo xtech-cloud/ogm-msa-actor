@@ -37,6 +37,7 @@ func (this *Device) List(_ctx context.Context, _req *proto.ListRequest, _rsp *pr
 	_rsp.Device = make([]*proto.DeviceEntity, len(device))
 	for i := 0; i < len(device); i++ {
 		_rsp.Device[i] = &proto.DeviceEntity{
+            Uuid: device[i].UUID,
 			SerialNumber: device[i].SerialNumber,
 			Name: device[i].Name,
 			OperatingSystem: device[i].OperatingSystem,

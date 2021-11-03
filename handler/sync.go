@@ -42,7 +42,7 @@ func (this *Sync) Push(_ctx context.Context, _req *proto.SyncPushRequest, _rsp *
 
 	deviceUUID := model.ToUUID(_req.Device.SerialNumber)
 	device := &cache.Device{
-		Model: model.Device{
+		Model: &model.Device{
 			UUID:            deviceUUID,
 			SerialNumber:    _req.Device.SerialNumber,
 			Name:            _req.Device.Name,
@@ -61,116 +61,48 @@ func (this *Sync) Push(_ctx context.Context, _req *proto.SyncPushRequest, _rsp *
 		Program:          program,
 	}
 	profileUUID := model.ToProfileUUID(_req.Domain, deviceUUID)
-
-	// 在缓存中查找
-	caoDevice := cache.NewDeviceCAO()
-	deviceInCache, err := caoDevice.Find(deviceUUID)
-	if nil != err {
-		_rsp.Status.Code = -1
-		_rsp.Status.Message = err.Error()
-		return nil
-	}
-
-	// 缓存和数据库中都没有时，在数据库中插入新值
-	if nil == deviceInCache {
-		daoDevice := model.NewDeviceDAO(nil)
-		if !daoDevice.Exists(deviceUUID) {
-			// 插入设备实体
-			err = daoDevice.Insert(&device.Model)
-			if nil != err {
-				_rsp.Status.Code = -1
-				_rsp.Status.Message = err.Error()
-				return nil
-			}
-			// 插入简介实体
-			daoProfile := model.NewProfileDAO(nil)
-			if !daoProfile.Exists(profileUUID) {
-				profile := &model.Profile{
-					UUID:   profileUUID,
-					Domain: _req.Domain,
-					Device: deviceUUID,
-					Access: 0,
-					Alias:  "",
-				}
-				err = daoProfile.Insert(profile)
-				if nil != err {
-					_rsp.Status.Code = -1
-					_rsp.Status.Message = err.Error()
-					return nil
-				}
-			}
-		}
-	} else {
-		// 当值不一致时，更新数据库值
-		changed := deviceInCache.Model.Name != device.Model.Name ||
-			deviceInCache.Model.OperatingSystem != device.Model.OperatingSystem ||
-			deviceInCache.Model.SystemVersion != device.Model.SystemVersion ||
-			deviceInCache.Model.Shape != device.Model.Shape
-		if changed {
-			daoDevice := model.NewDeviceDAO(nil)
-			err := daoDevice.Update(&device.Model)
-			if nil != err {
-				_rsp.Status.Code = -1
-				_rsp.Status.Message = err.Error()
-				return nil
-			}
-		}
+	profile := &cache.Profile{
+		Model: &model.Profile{
+			UUID:       profileUUID,
+			DomainUUID: _req.Domain,
+			DeviceUUID: deviceUUID,
+			Access:     0,
+			Alias:      "",
+		},
 	}
 
 	//在缓存中更新设备
-	caoDevice.Save(deviceUUID, device)
+	caoDevice := cache.NewDeviceCAO()
+	caoDevice.Save(device)
 
-	// 查找缓存是否包含此简介
+	//在缓存中更新简介
 	caoProfile := cache.NewProfileCAO()
-	profileInCache, err := caoProfile.Find(profileUUID)
-	if nil != err {
+	caoProfile.Save(profile)
+
+	//在缓存中更新属性
+	caoDomain := cache.NewDomainCAO()
+	domain, err := caoDomain.Get(_req.Domain)
+	if "" == _req.Device.SerialNumber {
 		_rsp.Status.Code = -1
 		_rsp.Status.Message = err.Error()
 		return nil
 	}
-	// 缓存没有值时，从数据库中取值
-	if nil == profileInCache {
-		daoProfile := model.NewProfileDAO(nil)
-		profile, err := daoProfile.Get(profileUUID)
-		if nil != err {
-			_rsp.Status.Code = -1
-			_rsp.Status.Message = err.Error()
-			return nil
-		}
-		profileInCache = &cache.Profile{
-			Access: profile.Access,
-			Alias:  profile.Alias,
-		}
-	}
-	//在缓存中更新简介
-	caoProfile.Save(profileUUID, profileInCache)
-
-	//在缓存中更新属性
-	caoProperty := cache.NewPropertyCAO()
 	if nil != _req.UpProperty {
 		for k, v := range _req.UpProperty {
-			caoProperty.Save(k, v)
+			domain.Property[k] = v
 		}
 	}
 
 	// 赋值回复
-	_rsp.Access = profileInCache.Access
-	_rsp.Alias = profileInCache.Alias
+	_rsp.Access = profile.Model.Access
+	_rsp.Alias = profile.Model.Alias
 
 	_rsp.Property = make(map[string]string)
 	if nil != _req.DownProperty {
 		for _, k := range _req.DownProperty {
-			v, ok, err := caoProperty.Find(k)
-			if nil != err {
-				_rsp.Status.Code = -1
-				_rsp.Status.Message = err.Error()
-				return nil
+			if v, ok := domain.Property[k]; ok {
+				_rsp.Property[k] = v
 			}
-			// 仅返回存在的属性
-			if !ok {
-				continue
-			}
-			_rsp.Property[k] = v
 		}
 	}
 
@@ -187,40 +119,53 @@ func (this *Sync) Pull(_ctx context.Context, _req *proto.SyncPullRequest, _rsp *
 		return nil
 	}
 
-	dao := model.NewJoinDAO(nil)
-	device, err := dao.ListDeviceByDomain(_req.Domain)
+	//TODO 仅拉取允许访问的设备
+
+	caoProfile := cache.NewProfileCAO()
+	caoDevice := cache.NewDeviceCAO()
+	profileAry, err := caoProfile.Filter(_req.Domain)
 	if nil != err {
 		_rsp.Status.Code = -1
 		_rsp.Status.Message = err.Error()
 		return nil
 	}
 
-	_rsp.Device = make([]*proto.DeviceEntity, len(device))
-	for i := 0; i < len(device); i++ {
+	_rsp.Device = make([]*proto.DeviceEntity, len(profileAry))
+	for i, v := range profileAry {
+		profile, err := caoProfile.Get(v)
+		if nil != err {
+			_rsp.Status.Code = -1
+			_rsp.Status.Message = err.Error()
+			return nil
+		}
+		device, err := caoDevice.Get(profile.Model.DeviceUUID)
+		if nil != err {
+			_rsp.Status.Code = -1
+			_rsp.Status.Message = err.Error()
+			return nil
+		}
 		_rsp.Device[i] = &proto.DeviceEntity{
-			SerialNumber:    device[i].SerialNumber,
-			Name:            device[i].Name,
-			OperatingSystem: device[i].OperatingSystem,
-			SystemVersion:   device[i].SystemVersion,
-			Shape:           device[i].Shape,
+			SerialNumber:    device.Model.SerialNumber,
+			Name:            device.Model.Name,
+			OperatingSystem: device.Model.OperatingSystem,
+			SystemVersion:   device.Model.SystemVersion,
+			Shape:           device.Model.Shape,
 		}
 	}
 
 	_rsp.Property = make(map[string]string)
-	caoProperty := cache.NewPropertyCAO()
+	caoDomain := cache.NewDomainCAO()
+	domain, err := caoDomain.Get(_req.Domain)
+	if nil != err {
+		_rsp.Status.Code = -1
+		_rsp.Status.Message = err.Error()
+		return nil
+	}
 	if nil != _req.DownProperty {
 		for _, k := range _req.DownProperty {
-			v, ok, err := caoProperty.Find(k)
-			if nil != err {
-				_rsp.Status.Code = -1
-				_rsp.Status.Message = err.Error()
-				return nil
+			if v, ok := domain.Property[k]; ok {
+				_rsp.Property[k] = v
 			}
-			// 仅返回存在的属性
-			if !ok {
-				continue
-			}
-			_rsp.Property[k] = v
 		}
 	}
 

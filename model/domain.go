@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"time"
 )
 
@@ -37,6 +38,21 @@ func (this *DomainDAO) Insert(_domain *Domain) error {
 	db := this.conn.DB
 	return db.Create(_domain).Error
 }
+
+func (this *DomainDAO) Upsert(_domain *Domain) error {
+	db := this.conn.DB
+	// 在冲突时，更新除主键以外的所有列到新值。
+	return db.Clauses(clause.OnConflict{
+		UpdateAll: true,
+	}).Create(_domain).Error
+}
+
+func (this *DomainDAO) Update(_uuid string, _name string) error {
+	db := this.conn.DB
+    res := db.Model(&Domain{}).Where("uuid = ?", _uuid).Updates(Domain{Name:_name})
+	return res.Error
+}
+
 
 func (this *DomainDAO) Get(_uuid string) (*Domain, error) {
 	db := this.conn.DB

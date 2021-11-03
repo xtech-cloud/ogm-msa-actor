@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"time"
 )
 
@@ -49,6 +50,14 @@ func (this *DeviceDAO) Insert(_device *Device) error {
 	return db.Create(_device).Error
 }
 
+func (this *DeviceDAO) Upsert(_device *Device) error {
+	db := this.conn.DB
+	// 在冲突时，更新除主键以外的所有列到新值。
+	return db.Clauses(clause.OnConflict{
+		UpdateAll: true,
+	}).Create(_device).Error
+}
+
 func (this *DeviceDAO) Update(_device *Device) error {
 	db := this.conn.DB
 	res := db.Model(&Device{}).Where("uuid = ?", _device.UUID).Updates(
@@ -59,6 +68,17 @@ func (this *DeviceDAO) Update(_device *Device) error {
 			"shape": _device.Shape,
 		})
 	return res.Error
+}
+
+func (this *DeviceDAO) Get(_uuid string) (*Device, error) {
+	db := this.conn.DB
+	var device Device
+	res := db.Where("uuid = ?", _uuid).First(&device)
+	// 未找到时，返回空值
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return &device, res.Error
 }
 
 func (this *DeviceDAO) FindBySN(_serialnumber string) (*Device, error) {
@@ -85,4 +105,3 @@ func (this *DeviceDAO) List(_offset int64, _count int64) ([]*Device, error) {
 	res := db.Offset(int(_offset)).Limit(int(_count)).Order("created_at desc").Find(&device)
 	return device, res.Error
 }
-

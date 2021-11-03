@@ -5,7 +5,7 @@ import (
 )
 
 type Device struct {
-	Model            model.Device
+	Model            *model.Device
 	Battery          int32             // 电量
 	Volume           int32             // 音量
 	Brightness       int32             // 亮度
@@ -18,7 +18,8 @@ type Device struct {
 }
 
 //TODO use redis/memory
-var deviceMap map[string]*Device
+// key is device_uuid
+var deviceUUID_device_map map[string]*Device
 
 type DeviceCAO struct {
 }
@@ -27,17 +28,50 @@ func NewDeviceCAO() *DeviceCAO {
 	return &DeviceCAO{}
 }
 
-func (this *DeviceCAO) Find(_uuid string) (*Device, error) {
-	device, _ := deviceMap[_uuid]
-	return device, nil
+func (this *DeviceCAO) Get(_uuid string) (*Device, error) {
+	if _, ok := deviceUUID_device_map[_uuid]; !ok {
+		daoDevice := model.NewDeviceDAO(nil)
+		device, err := daoDevice.Get(_uuid)
+		if nil != err {
+			return nil, err
+		}
+		deviceUUID_device_map[_uuid] = &Device{
+			Model:   device,
+			Program: make(map[string]string),
+		}
+	}
+	return deviceUUID_device_map[_uuid], nil
 }
 
-func (this *DeviceCAO) Save(_uuid string, _entity *Device) error {
-	deviceMap[_uuid] = _entity
+func (this *DeviceCAO) Save(_device *Device) error {
+	// 缓存不存在
+	if device, ok := deviceUUID_device_map[_device.Model.UUID]; !ok {
+		dao := model.NewDeviceDAO(nil)
+		// 在数据库中更新或插入设备实体
+		err := dao.Upsert(_device.Model)
+		if nil != err {
+			return err
+		}
+	} else {
+		// 当值不一致时，更新数据库值
+		changed := device.Model.Name != _device.Model.Name ||
+			device.Model.OperatingSystem != _device.Model.OperatingSystem ||
+			device.Model.SystemVersion != _device.Model.SystemVersion ||
+			device.Model.Shape != _device.Model.Shape
+		if changed {
+			dao := model.NewDeviceDAO(nil)
+			err := dao.Update(device.Model)
+			if nil != err {
+				return err
+			}
+		}
+	}
+
+	deviceUUID_device_map[_device.Model.UUID] = _device
 	return nil
 }
 
 func (this *DeviceCAO) Delete(_uuid string) error {
-	delete(deviceMap, _uuid)
+	delete(deviceUUID_device_map, _uuid)
 	return nil
 }
