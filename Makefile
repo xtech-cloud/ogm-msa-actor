@@ -40,7 +40,7 @@ call:
 
 .PHONY: post
 post:
-	curl -X POST -H 'Content-Type:application/json' -d '{"msg":"hello"}' 127.0.0.1/actor/Healthy/Echo
+	curl -X POST -H 'Content-Type:application/json' -d '{"msg":"hello"}' localhost/ogm/actor/Healthy/Echo
 
 .PHONY: benchmark
 benchmark:

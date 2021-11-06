@@ -105,3 +105,33 @@ func (this *DeviceDAO) List(_offset int64, _count int64) ([]*Device, error) {
 	res := db.Offset(int(_offset)).Limit(int(_count)).Order("created_at desc").Find(&device)
 	return device, res.Error
 }
+
+func (this *DeviceDAO) Search(_offset int64, _count int64,
+	_serialnumber string, _name string, _operatingSystem string,
+	_systemVersion string, _shape string) (int64, []*Device, error) {
+	db := this.conn.DB
+	if "" != _serialnumber {
+		db = db.Where("sn LIKE ?", "%"+_serialnumber+"%")
+	}
+	if "" != _name {
+		db = db.Where("name LIKE ?", "%"+_name+"%")
+	}
+	if "" != _operatingSystem {
+		db = db.Where("os LIKE ?", "%"+_operatingSystem+"%")
+	}
+	if "" != _systemVersion {
+		db = db.Where("ver LIKE ?", "%"+_systemVersion+"%")
+	}
+	if "" != _shape {
+		db = db.Where("shape LIKE ?", "%"+_shape+"%")
+	}
+	var count int64
+	res := db.Model(&Device{}).Count(&count)
+	if nil != res.Error {
+		return 0, nil, res.Error
+	}
+
+	var device []*Device
+	res = db.Offset(int(_offset)).Limit(int(_count)).Order("created_at desc").Find(&device)
+	return count, device, res.Error
+}

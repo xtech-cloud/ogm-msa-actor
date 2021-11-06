@@ -6,9 +6,9 @@
   },
   "openapi": "3.0.0",
   "paths": {
-    "/ogm/actor/Sync/Push": {
+    "/ogm/actor/Device/Search": {
       "post": {
-        "operationId": "/ogm/actor/Sync/PushPOST",
+        "operationId": "/ogm/actor/Device/SearchPOST",
         "requestBody": {},
         "responses": {
           "default": {
@@ -20,10 +20,10 @@
         "x-apisix-plugins": {
           "grpc-transcode": {
             "deadline": 0,
-            "method": "Push",
+            "method": "Search",
             "pb_option": [ "no_default_values" ],
             "proto_id": "18810",
-            "service": "actor.Sync"
+            "service": "actor.Device"
           }
         },
         "x-apisix-priority": 0,

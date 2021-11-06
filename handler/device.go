@@ -37,15 +37,52 @@ func (this *Device) List(_ctx context.Context, _req *proto.ListRequest, _rsp *pr
 	_rsp.Device = make([]*proto.DeviceEntity, len(device))
 	for i := 0; i < len(device); i++ {
 		_rsp.Device[i] = &proto.DeviceEntity{
-            Uuid: device[i].UUID,
-			SerialNumber: device[i].SerialNumber,
-			Name: device[i].Name,
+			Uuid:            device[i].UUID,
+			SerialNumber:    device[i].SerialNumber,
+			Name:            device[i].Name,
 			OperatingSystem: device[i].OperatingSystem,
-			SystemVersion: device[i].SystemVersion,
-			Shape: device[i].Shape,
+			SystemVersion:   device[i].SystemVersion,
+			Shape:           device[i].Shape,
 		}
 	}
 
 	return nil
 }
 
+func (this *Device) Search(_ctx context.Context, _req *proto.DeviceSearchRequest, _rsp *proto.DeviceSearchResponse) error {
+	logger.Infof("Received Device.Search request: %v", _req)
+	_rsp.Status = &proto.Status{}
+
+	offset := int64(0)
+	if _req.Offset > 0 {
+		offset = _req.Offset
+	}
+	count := int64(0)
+	if _req.Count > 0 {
+		count = _req.Count
+	}
+
+	dao := model.NewDeviceDAO(nil)
+	total, device, err := dao.Search(offset, count, _req.SerialNumber, _req.Name, _req.OperatingSystem, _req.SystemVersion, _req.Shape)
+	if nil != err {
+		_rsp.Status.Code = -1
+		_rsp.Status.Message = err.Error()
+		return nil
+	}
+
+	_rsp.Total = total
+
+	_rsp.Device = make([]*proto.DeviceEntity, len(device))
+	for i := 0; i < len(device); i++ {
+		_rsp.Device[i] = &proto.DeviceEntity{
+			Uuid:            device[i].UUID,
+			SerialNumber:    device[i].SerialNumber,
+			Name:            device[i].Name,
+			OperatingSystem: device[i].OperatingSystem,
+			SystemVersion:   device[i].SystemVersion,
+			Shape:           device[i].Shape,
+		}
+	}
+
+	return nil
+}

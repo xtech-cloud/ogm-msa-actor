@@ -65,6 +65,17 @@ func (this *DomainDAO) Get(_uuid string) (*Domain, error) {
 	return &domain, res.Error
 }
 
+func (this *DomainDAO) FindByName(_name string) (*Domain, error) {
+	db := this.conn.DB
+	var domain Domain
+	res := db.Where("name = ?", _name).First(&domain)
+	// 未找到时，返回空值
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return &domain, res.Error
+}
+
 func (this *DomainDAO) Exists(_name string) bool {
 	db := this.conn.DB
 	var count int64
@@ -84,6 +95,22 @@ func (this *DomainDAO) List(_offset int64, _count int64) ([]*Domain, error) {
 	var domain []*Domain
 	res := db.Offset(int(_offset)).Limit(int(_count)).Order("created_at desc").Find(&domain)
 	return domain, res.Error
+}
+
+func (this *DomainDAO) Search(_offset int64, _count int64, _name string) (int64, []*Domain, error) {
+	db := this.conn.DB
+    if "" != _name {
+        db = db.Where("name LIKE ?", "%"+_name+"%")
+    }
+	var count int64
+    res := db.Model(&Domain{}).Count(&count)
+    if nil != res.Error {
+        return 0, nil, res.Error
+    }
+
+	var domain []*Domain
+	res = db.Offset(int(_offset)).Limit(int(_count)).Order("created_at desc").Find(&domain)
+	return count, domain, res.Error
 }
 
 func (this *DomainDAO) Delete(_uuid string) error {
