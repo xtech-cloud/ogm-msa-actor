@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-type Profile struct {
+type Guard struct {
 	UUID       string `gorm:"column:uuid;type:char(32);primaryKey"`
 	Domain     Domain `gorm:"ForeignKey:DomainUUID;AssociationForeignKey:uuid"`
 	DomainUUID string `gorm:"column:domain_uuid;type:char(32);not null"`
@@ -16,68 +16,68 @@ type Profile struct {
 	Access     int32  `gorm:"column:access;type:tinyint;not null;default:0"`
 }
 
-func (Profile) TableName() string {
-	return "ogm_actor_profile"
+func (Guard) TableName() string {
+	return "ogm_actor_guard"
 }
 
-type ProfileDAO struct {
+type GuardDAO struct {
 	conn *Conn
 }
 
-func ToProfileUUID(_domainUUID string, _deviceUUID string) string {
+func ToGuardUUID(_domainUUID string, _deviceUUID string) string {
 	return ToUUID(_domainUUID + _deviceUUID)
 }
 
-func NewProfileDAO(_conn *Conn) *ProfileDAO {
+func NewGuardDAO(_conn *Conn) *GuardDAO {
 	conn := DefaultConn
 	if nil != _conn {
 		conn = _conn
 	}
-	return &ProfileDAO{
+	return &GuardDAO{
 		conn: conn,
 	}
 }
 
-func (this *ProfileDAO) Insert(_profile *Profile) error {
+func (this *GuardDAO) Insert(_guard *Guard) error {
 	db := this.conn.DB
-	return db.Create(_profile).Error
+	return db.Create(_guard).Error
 }
 
-func (this *ProfileDAO) Upsert(_profile *Profile) error {
+func (this *GuardDAO) Upsert(_guard *Guard) error {
 	db := this.conn.DB
 	// 在冲突时，更新除主键以外的所有列到新值。
 	return db.Clauses(clause.OnConflict{
 		DoNothing: true,
-	}).Create(_profile).Error
+	}).Create(_guard).Error
 }
 
-func (this *ProfileDAO) Get(_uuid string) (*Profile, error) {
+func (this *GuardDAO) Get(_uuid string) (*Guard, error) {
 	db := this.conn.DB
-	var profile Profile
-	res := db.Where("uuid = ?", _uuid).First(&profile)
+	var guard Guard
+	res := db.Where("uuid = ?", _uuid).First(&guard)
 	// 未找到时，返回空值
 	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
-	return &profile, res.Error
+	return &guard, res.Error
 }
 
-func (this *ProfileDAO) FindByDomain(_uuid string) ([]Profile, error) {
+func (this *GuardDAO) FindByDomain(_uuid string) ([]Guard, error) {
 	db := this.conn.DB
-	var profile []Profile
-	res := db.Where("domain_uuid = ?", _uuid).Find(&profile)
-	return profile, res.Error
+	var guard []Guard
+	res := db.Where("domain_uuid = ?", _uuid).Find(&guard)
+	return guard, res.Error
 }
 
-func (this *ProfileDAO) Exists(_uuid string) bool {
+func (this *GuardDAO) Exists(_uuid string) bool {
 	db := this.conn.DB
 	var count int64
-	db.Model(&Profile{}).Where("uuid = ?", _uuid).Count(&count)
+	db.Model(&Guard{}).Where("uuid = ?", _uuid).Count(&count)
 	return count > 0
 }
 
-func (this *ProfileDAO) Update(_uuid string, _access int32, _alias string) error {
+func (this *GuardDAO) Update(_uuid string, _access int32, _alias string) error {
 	db := this.conn.DB
-	res := db.Model(&Profile{}).Where("uuid = ?", _uuid).Updates(Profile{Access: _access, Alias: _alias})
+	res := db.Model(&Guard{}).Where("uuid = ?", _uuid).Updates(Guard{Access: _access, Alias: _alias})
 	return res.Error
 }

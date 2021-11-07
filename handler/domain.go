@@ -157,86 +157,37 @@ func (this *Domain) Search(_ctx context.Context, _req *proto.DomainSearchRequest
 	return nil
 }
 
+func (this *Domain) Update(_ctx context.Context, _req *proto.DomainUpdateRequest, _rsp *proto.BlankResponse) error {
+	logger.Infof("Received Domain.Update request: %v", _req)
+	_rsp.Status = &proto.Status{}
+
+	if "" == _req.Uuid{
+		_rsp.Status.Code = 1
+		_rsp.Status.Message = "uuid is required"
+		return nil
+	}
+
+	if "" == _req.Name {
+		_rsp.Status.Code = 1
+		_rsp.Status.Message = "name is required"
+		return nil
+	}
+
+	dao := model.NewDomainDAO(nil)
+	err := dao.Update(_req.Uuid, _req.Name)
+	if nil != err {
+		_rsp.Status.Code = -1
+		_rsp.Status.Message = err.Error()
+		return nil
+	}
+
+	return nil
+}
+
+
 func (this *Domain) Execute(_ctx context.Context, _req *proto.DomainExecuteRequest, _rsp *proto.BlankResponse) error {
 	logger.Infof("Received Domain.Execute request: %v", _req)
 	_rsp.Status = &proto.Status{}
 	return nil
 }
 
-func (this *Domain) FetchDevice(_ctx context.Context, _req *proto.DomainFetchDeviceRequest, _rsp *proto.DomainFetchDeviceResponse) error {
-	logger.Infof("Received Domain.FetchDevice request: %v", _req)
-	_rsp.Status = &proto.Status{}
-
-	if "" == _req.Uuid {
-		_rsp.Status.Code = 1
-		_rsp.Status.Message = "uuid is required"
-		return nil
-	}
-
-	daoJoin := model.NewJoinDAO(nil)
-	device, err := daoJoin.ListDeviceByDomain(_req.Uuid)
-	if nil != err {
-		_rsp.Status.Code = -1
-		_rsp.Status.Message = err.Error()
-		return nil
-	}
-
-	_rsp.Device = make([]*proto.DeviceEntity, len(device))
-	for i := 0; i < len(device); i++ {
-		_rsp.Device[i] = &proto.DeviceEntity{
-			Uuid:            device[i].UUID,
-			SerialNumber:    device[i].SerialNumber,
-			Name:            device[i].Name,
-			OperatingSystem: device[i].OperatingSystem,
-			SystemVersion:   device[i].SystemVersion,
-			Shape:           device[i].Shape,
-		}
-	}
-
-	daoProfile := model.NewProfileDAO(nil)
-	profile, err := daoProfile.FindByDomain(_req.Uuid)
-	if nil != err {
-		_rsp.Status.Code = -1
-		_rsp.Status.Message = err.Error()
-		return nil
-	}
-
-	_rsp.Access = make(map[string]int32)
-	for i := 0; i < len(profile); i++ {
-		_rsp.Access[profile[i].DeviceUUID] = profile[i].Access
-	}
-
-	_rsp.Alias = make(map[string]string)
-	for i := 0; i < len(profile); i++ {
-		_rsp.Alias[profile[i].DeviceUUID] = profile[i].Alias
-	}
-
-	return nil
-}
-
-func (this *Domain) EditDevice(_ctx context.Context, _req *proto.DomainEditDeviceRequest, _rsp *proto.BlankResponse) error {
-	logger.Infof("Received Domain.EditDevice request: %v", _req)
-	_rsp.Status = &proto.Status{}
-
-	if "" == _req.Uuid {
-		_rsp.Status.Code = 1
-		_rsp.Status.Message = "uuid is required"
-		return nil
-	}
-
-	if "" == _req.Device {
-		_rsp.Status.Code = 1
-		_rsp.Status.Message = "device is required"
-		return nil
-	}
-
-	dao := model.NewProfileDAO(nil)
-	profileUUID := model.ToProfileUUID(_req.Uuid, _req.Device)
-	err := dao.Update(profileUUID, _req.Access, _req.Alias)
-	if "" == _req.Device {
-		_rsp.Status.Code = -1
-		_rsp.Status.Message = err.Error()
-		return nil
-	}
-	return nil
-}

@@ -6,9 +6,9 @@
   },
   "openapi": "3.0.0",
   "paths": {
-    "/ogm/actor/Domain/EditDevice": {
+    "/ogm/actor/Domain/Update": {
       "post": {
-        "operationId": "/ogm/actor/Domain/EditDevicePOST",
+        "operationId": "/ogm/actor/Domain/UpdatePOST",
         "requestBody": {},
         "responses": {
           "default": {
@@ -20,7 +20,7 @@
         "x-apisix-plugins": {
           "grpc-transcode": {
             "deadline": 0,
-            "method": "EditDevice",
+            "method": "Update",
             "pb_option": [ "no_default_values" ],
             "proto_id": "18810",
             "service": "actor.Domain"

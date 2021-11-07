@@ -71,7 +71,7 @@ func AutoMigrateDatabase() {
 	if nil != err {
 		logger.Fatal(err)
 	}
-	err = DefaultConn.DB.AutoMigrate(&Profile{})
+	err = DefaultConn.DB.AutoMigrate(&Guard{})
 	if nil != err {
 		logger.Fatal(err)
 	}

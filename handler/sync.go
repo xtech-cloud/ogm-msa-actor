@@ -60,10 +60,10 @@ func (this *Sync) Push(_ctx context.Context, _req *proto.SyncPushRequest, _rsp *
 		NetworkStrength:  _req.Device.NetworkStrength,
 		Program:          program,
 	}
-	profileUUID := model.ToProfileUUID(_req.Domain, deviceUUID)
-	profile := &cache.Profile{
-		Model: &model.Profile{
-			UUID:       profileUUID,
+	guardUUID := model.ToGuardUUID(_req.Domain, deviceUUID)
+	guard := &cache.Guard{
+		Model: &model.Guard{
+			UUID:       guardUUID,
 			DomainUUID: _req.Domain,
 			DeviceUUID: deviceUUID,
 			Access:     0,
@@ -75,9 +75,9 @@ func (this *Sync) Push(_ctx context.Context, _req *proto.SyncPushRequest, _rsp *
 	caoDevice := cache.NewDeviceCAO()
 	caoDevice.Save(device)
 
-	//在缓存中更新简介
-	caoProfile := cache.NewProfileCAO()
-	caoProfile.Save(profile)
+	//在缓存中更新守卫
+	caoGuard := cache.NewGuardCAO()
+	caoGuard.Save(guard)
 
 	//在缓存中更新属性
 	caoDomain := cache.NewDomainCAO()
@@ -94,8 +94,8 @@ func (this *Sync) Push(_ctx context.Context, _req *proto.SyncPushRequest, _rsp *
 	}
 
 	// 赋值回复
-	_rsp.Access = profile.Model.Access
-	_rsp.Alias = profile.Model.Alias
+	_rsp.Access = guard.Model.Access
+	_rsp.Alias = guard.Model.Alias
 
 	_rsp.Property = make(map[string]string)
 	if nil != _req.DownProperty {
@@ -121,9 +121,9 @@ func (this *Sync) Pull(_ctx context.Context, _req *proto.SyncPullRequest, _rsp *
 
 	//TODO 仅拉取允许访问的设备
 
-	caoProfile := cache.NewProfileCAO()
+	caoGuard := cache.NewGuardCAO()
 	caoDevice := cache.NewDeviceCAO()
-	profileAry, err := caoProfile.Filter(_req.Domain)
+	profileAry, err := caoGuard.Filter(_req.Domain)
 	if nil != err {
 		_rsp.Status.Code = -1
 		_rsp.Status.Message = err.Error()
@@ -132,7 +132,7 @@ func (this *Sync) Pull(_ctx context.Context, _req *proto.SyncPullRequest, _rsp *
 
 	_rsp.Device = make([]*proto.DeviceEntity, len(profileAry))
 	for i, v := range profileAry {
-		profile, err := caoProfile.Get(v)
+		profile, err := caoGuard.Get(v)
 		if nil != err {
 			_rsp.Status.Code = -1
 			_rsp.Status.Message = err.Error()

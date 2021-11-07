@@ -17,11 +17,10 @@ func NewJoinDAO(_conn *Conn) *JoinDAO {
 }
 
 func (this *JoinDAO) ListDeviceByDomain(_uuid string) ([]Device, error) {
-	//TODO 关联表查询
 	db := this.conn.DB
 	var device []Device
 	subQuery1 := db.Model(&Device{})
-	subQuery2 := db.Model(&Profile{}).Select("device_uuid").Where("domain_uuid = ?", _uuid)
+	subQuery2 := db.Model(&Guard{}).Select("device_uuid").Where("domain_uuid = ?", _uuid)
 	res := db.Table("(?) as d, (?) as p", subQuery1, subQuery2).Find(&device)
 	return device, res.Error
 }
