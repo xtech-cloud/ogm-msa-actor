@@ -13,7 +13,7 @@ type Guard struct {
 var guardUUID_guard_map map[string]*Guard
 
 // key is domain_uuid, value is guard_uuid
-var domainUUID_guardUUIDS_map map[string][]string
+var domainUUID_guardUUIDS_map map[string]map[string]string
 
 type GuardCAO struct {
 }
@@ -22,16 +22,16 @@ func NewGuardCAO() *GuardCAO {
 	return &GuardCAO{}
 }
 
-func (this *GuardCAO) Filter(_domainUUID string) ([]string, error) {
+func (this *GuardCAO) Filter(_domainUUID string) (map[string]string, error) {
 	if _, ok := domainUUID_guardUUIDS_map[_domainUUID]; !ok {
+		domainUUID_guardUUIDS_map[_domainUUID] = make(map[string]string)
 		dao := model.NewGuardDAO(nil)
 		guardAry, err := dao.FindByDomain(_domainUUID)
 		if nil != err {
 			return nil, err
 		}
-		ary := make([]string, len(guardAry))
-		for i, v := range guardAry {
-			ary[i] = v.UUID
+		for _, v := range guardAry {
+			domainUUID_guardUUIDS_map[_domainUUID][v.UUID] = v.DeviceUUID
 		}
 	}
 	return domainUUID_guardUUIDS_map[_domainUUID], nil
@@ -73,7 +73,11 @@ func (this *GuardCAO) Save(_guard *Guard) error {
 			}
 		}
 	}
+	if _, ok := domainUUID_guardUUIDS_map[_guard.Model.DomainUUID]; !ok {
+		domainUUID_guardUUIDS_map[_guard.Model.DomainUUID] = make(map[string]string)
+	}
 
+	domainUUID_guardUUIDS_map[_guard.Model.DomainUUID][_guard.Model.UUID] = _guard.Model.DeviceUUID
 	guardUUID_guard_map[_guard.Model.UUID] = _guard
 	return nil
 }

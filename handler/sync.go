@@ -119,38 +119,45 @@ func (this *Sync) Pull(_ctx context.Context, _req *proto.SyncPullRequest, _rsp *
 		return nil
 	}
 
-	//TODO 仅拉取允许访问的设备
-
 	caoGuard := cache.NewGuardCAO()
 	caoDevice := cache.NewDeviceCAO()
-	profileAry, err := caoGuard.Filter(_req.Domain)
+	guardMap, err := caoGuard.Filter(_req.Domain)
 	if nil != err {
 		_rsp.Status.Code = -1
 		_rsp.Status.Message = err.Error()
 		return nil
 	}
 
-	_rsp.Device = make([]*proto.DeviceEntity, len(profileAry))
-	for i, v := range profileAry {
-		profile, err := caoGuard.Get(v)
+	_rsp.Device = make([]*proto.DeviceEntity, 0)
+	_rsp.Alias = make(map[string]string)
+	idx := 0
+	for guardUUID, deviceUUID := range guardMap {
+		guard, err := caoGuard.Get(guardUUID)
 		if nil != err {
 			_rsp.Status.Code = -1
 			_rsp.Status.Message = err.Error()
 			return nil
 		}
-		device, err := caoDevice.Get(profile.Model.DeviceUUID)
+		device, err := caoDevice.Get(deviceUUID)
 		if nil != err {
 			_rsp.Status.Code = -1
 			_rsp.Status.Message = err.Error()
 			return nil
 		}
-		_rsp.Device[i] = &proto.DeviceEntity{
+		//仅拉取允许访问的设备
+		if guard.Model.Access != 1 {
+			continue
+		}
+		_rsp.Device = append(_rsp.Device, &proto.DeviceEntity{
+			Uuid:            device.Model.UUID,
 			SerialNumber:    device.Model.SerialNumber,
 			Name:            device.Model.Name,
 			OperatingSystem: device.Model.OperatingSystem,
 			SystemVersion:   device.Model.SystemVersion,
 			Shape:           device.Model.Shape,
-		}
+		})
+		_rsp.Alias[deviceUUID] = guard.Model.Alias
+		idx = idx + 1
 	}
 
 	_rsp.Property = make(map[string]string)

@@ -47,6 +47,7 @@ func main() {
 	proto.RegisterDomainHandler(service.Server(), new(handler.Domain))
 	proto.RegisterDeviceHandler(service.Server(), new(handler.Device))
 	proto.RegisterGuardHandler(service.Server(), new(handler.Guard))
+	proto.RegisterApplicationHandler(service.Server(), new(handler.Application))
 	proto.RegisterSyncHandler(service.Server(), new(handler.Sync))
 
 	app, _ := filepath.Abs(os.Args[0])

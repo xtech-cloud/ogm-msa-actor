@@ -75,6 +75,10 @@ func AutoMigrateDatabase() {
 	if nil != err {
 		logger.Fatal(err)
 	}
+	err = DefaultConn.DB.AutoMigrate(&Application{})
+	if nil != err {
+		logger.Fatal(err)
+	}
 }
 
 func NewUUID() string {

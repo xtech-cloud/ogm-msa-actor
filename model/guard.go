@@ -45,7 +45,7 @@ func (this *GuardDAO) Insert(_guard *Guard) error {
 
 func (this *GuardDAO) Upsert(_guard *Guard) error {
 	db := this.conn.DB
-	// 在冲突时，更新除主键以外的所有列到新值。
+	// 在冲突时，不做任何操作
 	return db.Clauses(clause.OnConflict{
 		DoNothing: true,
 	}).Create(_guard).Error
