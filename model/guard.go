@@ -12,7 +12,7 @@ type Guard struct {
 	DomainUUID string `gorm:"column:domain_uuid;type:char(32);not null"`
 	Device     Device `gorm:"ForeignKey:DeviceUUID;AssociationForeignKey:uuid"`
 	DeviceUUID string `gorm:"column:device_uuid;type:char(32);not null"`
-	Alias      string `gorm:"column:alias;type:varchar(128);not null"`
+    Alias      string `gorm:"column:alias;type:varchar(128);not null;default:''"`
 	Access     int32  `gorm:"column:access;type:tinyint;not null;default:0"`
 }
 
@@ -78,6 +78,7 @@ func (this *GuardDAO) Exists(_uuid string) bool {
 
 func (this *GuardDAO) Update(_uuid string, _access int32, _alias string) error {
 	db := this.conn.DB
+    // 忽略零值
 	res := db.Model(&Guard{}).Where("uuid = ?", _uuid).Updates(Guard{Access: _access, Alias: _alias})
 	return res.Error
 }

@@ -14,6 +14,7 @@ type Application struct {
 	Program    string `gorm:"column:program;type:varchar(512);not null"`
 	Location   string `gorm:"column:location;type:varchar(512);not null"`
 	Url        string `gorm:"column:url;type:varchar(1024);not null"`
+	Upgrade    int32  `gorm:"column:upgrade;type:tinyint;not null;default:0"`
 }
 
 func (Application) TableName() string {
@@ -46,6 +47,13 @@ func (this *ApplicationDAO) Upsert(_application *Application) error {
 	}).Create(_application).Error
 }
 
+func (this *ApplicationDAO) Update(_application *Application) error {
+	db := this.conn.DB
+    // 更新非零值
+    return db.Model(_application).Updates(_application).Error
+}
+
+
 func (this *ApplicationDAO) Get(_uuid string) (*Application, error) {
 	db := this.conn.DB
 	var application Application
@@ -60,11 +68,11 @@ func (this *ApplicationDAO) Get(_uuid string) (*Application, error) {
 func (this *ApplicationDAO) FindByDomain(_uuid string) (int64, []Application, error) {
 	db := this.conn.DB
 	db = db.Where("domain_uuid = ?", _uuid)
-    var total int64
-    res := db.Model(&Application{}).Count(&total)
-    if res.Error != nil {
-        return 0, nil, res.Error
-    }
+	var total int64
+	res := db.Model(&Application{}).Count(&total)
+	if res.Error != nil {
+		return 0, nil, res.Error
+	}
 	var application []Application
 	res = db.Find(&application)
 	return total, application, res.Error

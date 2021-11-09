@@ -66,8 +66,6 @@ func (this *Sync) Push(_ctx context.Context, _req *proto.SyncPushRequest, _rsp *
 			UUID:       guardUUID,
 			DomainUUID: _req.Domain,
 			DeviceUUID: deviceUUID,
-			Access:     0,
-			Alias:      "",
 		},
 	}
 
@@ -149,12 +147,21 @@ func (this *Sync) Pull(_ctx context.Context, _req *proto.SyncPullRequest, _rsp *
 			continue
 		}
 		_rsp.Device = append(_rsp.Device, &proto.DeviceEntity{
-			Uuid:            device.Model.UUID,
-			SerialNumber:    device.Model.SerialNumber,
-			Name:            device.Model.Name,
-			OperatingSystem: device.Model.OperatingSystem,
-			SystemVersion:   device.Model.SystemVersion,
-			Shape:           device.Model.Shape,
+			Uuid:             device.Model.UUID,
+			SerialNumber:     device.Model.SerialNumber,
+			Name:             device.Model.Name,
+			OperatingSystem:  device.Model.OperatingSystem,
+			SystemVersion:    device.Model.SystemVersion,
+			Shape:            device.Model.Shape,
+			Battery:          device.Battery,
+			Volume:           device.Volume,
+			Brightness:       device.Brightness,
+			Storage:          device.Storage,
+			StorageBlocks:    device.StorageBlocks,
+			StorageAvailable: device.StorageAvailable,
+			Network:          device.Network,
+			NetworkStrength:  device.NetworkStrength,
+			Program:          device.Program,
 		})
 		_rsp.Alias[deviceUUID] = guard.Model.Alias
 		idx = idx + 1

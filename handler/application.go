@@ -38,9 +38,68 @@ func (this *Application) List(_ctx context.Context, _req *proto.ApplicationListR
 			Program:  application[i].Program,
 			Location: application[i].Location,
 			Url:      application[i].Url,
+			Upgrade:  application[i].Upgrade,
 		}
 	}
 	_rsp.Total = total
+	return nil
+}
+
+func (this *Application) Update(_ctx context.Context, _req *proto.ApplicationUpdateRequest, _rsp *proto.BlankResponse) error {
+	logger.Infof("Received Application.Update request: %v", _req)
+	_rsp.Status = &proto.Status{}
+
+	if "" == _req.Uuid {
+		_rsp.Status.Code = 1
+		_rsp.Status.Message = "uuid is required"
+		return nil
+	}
+
+	if "" == _req.Name {
+		_rsp.Status.Code = 1
+		_rsp.Status.Message = "name is required"
+		return nil
+	}
+
+	if "" == _req.Version {
+		_rsp.Status.Code = 1
+		_rsp.Status.Message = "version is required"
+		return nil
+	}
+
+	if "" == _req.Url {
+		_rsp.Status.Code = 1
+		_rsp.Status.Message = "url is required"
+		return nil
+	}
+
+	if "" == _req.Program {
+		_rsp.Status.Code = 1
+		_rsp.Status.Message = "program is required"
+		return nil
+	}
+
+	if "" == _req.Location {
+		_rsp.Status.Code = 1
+		_rsp.Status.Message = "location is required"
+		return nil
+	}
+
+	dao := model.NewApplicationDAO(nil)
+	application := &model.Application{
+		UUID:     _req.Uuid,
+		Name:     _req.Name,
+		Version:  _req.Version,
+		Program:  _req.Program,
+		Location: _req.Location,
+		Url:      _req.Url,
+		Upgrade:  _req.Upgrade,
+	}
+	err := dao.Update(application)
+	if nil != err {
+		_rsp.Status.Code = -1
+		_rsp.Status.Message = err.Error()
+	}
 	return nil
 }
 
@@ -94,6 +153,7 @@ func (this *Application) Add(_ctx context.Context, _req *proto.ApplicationAddReq
 		Program:    _req.Program,
 		Location:   _req.Location,
 		Url:        _req.Url,
+		Upgrade:    _req.Upgrade,
 	}
 	err := dao.Upsert(application)
 	if nil != err {

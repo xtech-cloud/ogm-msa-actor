@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"ogm-actor/model"
+	"ogm-actor/cache"
 
 	proto "github.com/xtech-cloud/ogm-msp-actor/proto/actor"
 
@@ -86,6 +87,8 @@ func (this *Guard) Edit(_ctx context.Context, _req *proto.GuardEditRequest, _rsp
 		_rsp.Status.Message = err.Error()
 		return nil
 	}
+	cao := cache.NewGuardCAO()
+    cao.Load(guardUUID)
 	return nil
 }
 
