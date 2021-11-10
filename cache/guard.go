@@ -51,7 +51,7 @@ func (this *GuardCAO) Get(_uuid string) (*Guard, error) {
 	return guardUUID_guard_map[_uuid], nil
 }
 
-func (this *GuardCAO) Save(_guard *Guard) error {
+func (this *GuardCAO) Save(_guard *Guard) (*Guard, error) {
 
 	if _, ok := domainUUID_guardUUIDS_map[_guard.Model.DomainUUID]; !ok {
 		domainUUID_guardUUIDS_map[_guard.Model.DomainUUID] = make(map[string]string)
@@ -65,13 +65,13 @@ func (this *GuardCAO) Save(_guard *Guard) error {
 			// 在数据库中插入新值
 			err := dao.Upsert(_guard.Model)
 			if nil != err {
-				return err
+				return nil, err
 			}
 		} else {
 			// 在数据库中取值
 			guardInDB, err := dao.Get(_guard.Model.UUID)
 			if nil != err {
-				return err
+				return nil, err
 			}
 			_guard.Model.Alias = guardInDB.Alias
 			_guard.Model.Access = guardInDB.Access
@@ -79,7 +79,7 @@ func (this *GuardCAO) Save(_guard *Guard) error {
 		guardUUID_guard_map[_guard.Model.UUID] = _guard
 	}
 
-	return nil
+	return guardUUID_guard_map[_guard.Model.UUID] ,nil
 }
 
 func (this *GuardCAO) Load(_uuid string) error {

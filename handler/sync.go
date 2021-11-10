@@ -75,7 +75,12 @@ func (this *Sync) Push(_ctx context.Context, _req *proto.SyncPushRequest, _rsp *
 
 	//在缓存中更新守卫
 	caoGuard := cache.NewGuardCAO()
-	caoGuard.Save(guard)
+    guardInCache, err := caoGuard.Save(guard)
+	if "" == _req.Device.SerialNumber {
+		_rsp.Status.Code = -1
+		_rsp.Status.Message = err.Error()
+		return nil
+	}
 
 	//在缓存中更新属性
 	caoDomain := cache.NewDomainCAO()
@@ -92,8 +97,8 @@ func (this *Sync) Push(_ctx context.Context, _req *proto.SyncPushRequest, _rsp *
 	}
 
 	// 赋值回复
-	_rsp.Access = guard.Model.Access
-	_rsp.Alias = guard.Model.Alias
+	_rsp.Access = guardInCache.Model.Access
+	_rsp.Alias = guardInCache.Model.Alias
 
 	_rsp.Property = make(map[string]string)
 	if nil != _req.DownProperty {
