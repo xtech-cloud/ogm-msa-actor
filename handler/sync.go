@@ -75,7 +75,7 @@ func (this *Sync) Push(_ctx context.Context, _req *proto.SyncPushRequest, _rsp *
 
 	//在缓存中更新守卫
 	caoGuard := cache.NewGuardCAO()
-    guardInCache, err := caoGuard.Save(guard)
+	guardInCache, err := caoGuard.Save(guard)
 	if "" == _req.Device.SerialNumber {
 		_rsp.Status.Code = -1
 		_rsp.Status.Message = err.Error()
@@ -103,7 +103,13 @@ func (this *Sync) Push(_ctx context.Context, _req *proto.SyncPushRequest, _rsp *
 	_rsp.Property = make(map[string]string)
 	if nil != _req.DownProperty {
 		for _, k := range _req.DownProperty {
-			if v, ok := domain.Property[k]; ok {
+			if k == "_.domain.application.manifest" {
+				caoApplication := cache.NewApplicationCAO()
+				_rsp.Property[k] = caoApplication.GetManifest(_req.Domain)
+			} else if k == "_.domain.application.md5" {
+				caoApplication := cache.NewApplicationCAO()
+				_rsp.Property[k] = caoApplication.GetMD5(_req.Domain)
+			} else if v, ok := domain.Property[k]; ok {
 				_rsp.Property[k] = v
 			}
 		}

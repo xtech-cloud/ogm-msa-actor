@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"ogm-actor/cache"
 	"ogm-actor/model"
 
 	proto "github.com/xtech-cloud/ogm-msp-actor/proto/actor"
@@ -86,7 +87,14 @@ func (this *Application) Update(_ctx context.Context, _req *proto.ApplicationUpd
 	}
 
 	dao := model.NewApplicationDAO(nil)
-	application := &model.Application{
+	application, err := dao.Get(_req.Uuid)
+	if nil != err {
+		_rsp.Status.Code = -1
+		_rsp.Status.Message = err.Error()
+	}
+	domainUUID := application.DomainUUID
+
+	application = &model.Application{
 		UUID:     _req.Uuid,
 		Name:     _req.Name,
 		Version:  _req.Version,
@@ -95,11 +103,14 @@ func (this *Application) Update(_ctx context.Context, _req *proto.ApplicationUpd
 		Url:      _req.Url,
 		Upgrade:  _req.Upgrade,
 	}
-	err := dao.Update(application)
+	err = dao.Update(application)
 	if nil != err {
 		_rsp.Status.Code = -1
 		_rsp.Status.Message = err.Error()
 	}
+
+	cao := cache.NewApplicationCAO()
+	cao.Reload(domainUUID)
 	return nil
 }
 
@@ -160,6 +171,9 @@ func (this *Application) Add(_ctx context.Context, _req *proto.ApplicationAddReq
 		_rsp.Status.Code = -1
 		_rsp.Status.Message = err.Error()
 	}
+
+	cao := cache.NewApplicationCAO()
+	cao.Reload(_req.Domain)
 	return nil
 }
 
@@ -173,10 +187,18 @@ func (this *Application) Remove(_ctx context.Context, _req *proto.ApplicationRem
 		return nil
 	}
 	dao := model.NewApplicationDAO(nil)
-	err := dao.Delete(_req.Uuid)
+	application, err := dao.Get(_req.Uuid)
 	if nil != err {
 		_rsp.Status.Code = -1
 		_rsp.Status.Message = err.Error()
 	}
+	domainUUID := application.DomainUUID
+	err = dao.Delete(_req.Uuid)
+	if nil != err {
+		_rsp.Status.Code = -1
+		_rsp.Status.Message = err.Error()
+	}
+	cao := cache.NewApplicationCAO()
+	cao.Reload(domainUUID)
 	return nil
 }
