@@ -76,7 +76,7 @@ func (this *Sync) Push(_ctx context.Context, _req *proto.SyncPushRequest, _rsp *
 	//在缓存中更新守卫
 	caoGuard := cache.NewGuardCAO()
 	guardInCache, err := caoGuard.Save(guard)
-	if "" == _req.Device.SerialNumber {
+	if nil != err {
 		_rsp.Status.Code = -1
 		_rsp.Status.Message = err.Error()
 		return nil
@@ -85,7 +85,7 @@ func (this *Sync) Push(_ctx context.Context, _req *proto.SyncPushRequest, _rsp *
 	//在缓存中更新属性
 	caoDomain := cache.NewDomainCAO()
 	domain, err := caoDomain.Get(_req.Domain)
-	if "" == _req.Device.SerialNumber {
+	if err != nil {
 		_rsp.Status.Code = -1
 		_rsp.Status.Message = err.Error()
 		return nil
@@ -93,6 +93,17 @@ func (this *Sync) Push(_ctx context.Context, _req *proto.SyncPushRequest, _rsp *
 	if nil != _req.UpProperty {
 		for k, v := range _req.UpProperty {
 			domain.Property[k] = v
+		}
+	}
+
+	//在缓存中删除完成的指令
+	if nil != _req.Task {
+		for _, command := range _req.Task {
+			if found, ok := domain.Task[device.Model.SerialNumber]; ok {
+				if _, ok := found[command]; ok {
+					delete(found, command)
+				}
+			}
 		}
 	}
 
@@ -112,6 +123,14 @@ func (this *Sync) Push(_ctx context.Context, _req *proto.SyncPushRequest, _rsp *
 			} else if v, ok := domain.Property[k]; ok {
 				_rsp.Property[k] = v
 			}
+		}
+	}
+
+	// 赋值需要执行的任务
+	_rsp.Task = make(map[string]string)
+	if found, ok := domain.Task[device.Model.SerialNumber]; ok {
+		for k, v := range found {
+			_rsp.Task[k] = v
 		}
 	}
 

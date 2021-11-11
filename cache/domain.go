@@ -7,6 +7,8 @@ import (
 type Domain struct {
 	Model    *model.Domain
 	Property map[string]string
+	// map[device.sn]map[command]parameter
+	Task map[string]map[string]string
 }
 
 //TODO use redis/memory
@@ -30,6 +32,7 @@ func (this *DomainCAO) Get(_uuid string) (*Domain, error) {
 		domainUUID_domain_map[_uuid] = &Domain{
 			Model:    domain,
 			Property: make(map[string]string),
+			Task:     make(map[string]map[string]string),
 		}
 	}
 	return domainUUID_domain_map[_uuid], nil

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"ogm-actor/cache"
 	"ogm-actor/model"
 
 	proto "github.com/xtech-cloud/ogm-msp-actor/proto/actor"
@@ -161,7 +162,7 @@ func (this *Domain) Update(_ctx context.Context, _req *proto.DomainUpdateRequest
 	logger.Infof("Received Domain.Update request: %v", _req)
 	_rsp.Status = &proto.Status{}
 
-	if "" == _req.Uuid{
+	if "" == _req.Uuid {
 		_rsp.Status.Code = 1
 		_rsp.Status.Message = "uuid is required"
 		return nil
@@ -184,10 +185,35 @@ func (this *Domain) Update(_ctx context.Context, _req *proto.DomainUpdateRequest
 	return nil
 }
 
-
 func (this *Domain) Execute(_ctx context.Context, _req *proto.DomainExecuteRequest, _rsp *proto.BlankResponse) error {
 	logger.Infof("Received Domain.Execute request: %v", _req)
 	_rsp.Status = &proto.Status{}
+
+	if "" == _req.Uuid {
+		_rsp.Status.Code = 1
+		_rsp.Status.Message = "uuid is required"
+		return nil
+	}
+
+	if "" == _req.Command {
+		_rsp.Status.Code = 1
+		_rsp.Status.Message = "command is required"
+		return nil
+	}
+	caoDomain := cache.NewDomainCAO()
+	domain, err := caoDomain.Get(_req.Uuid)
+	if nil != err {
+		_rsp.Status.Code = -1
+		_rsp.Status.Message = err.Error()
+		return nil
+	}
+
+	for _, sn := range _req.Device {
+		// 赋值需要执行的任务
+		if _, ok := domain.Task[sn]; !ok {
+			domain.Task[sn] = make(map[string]string)
+		}
+		domain.Task[sn][_req.Command] = _req.Parameter
+	}
 	return nil
 }
-
