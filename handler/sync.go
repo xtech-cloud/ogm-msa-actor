@@ -4,6 +4,7 @@ import (
 	"context"
 	"ogm-actor/cache"
 	"ogm-actor/model"
+	"strings"
 
 	proto "github.com/xtech-cloud/ogm-msp-actor/proto/actor"
 
@@ -59,6 +60,7 @@ func (this *Sync) Push(_ctx context.Context, _req *proto.SyncPushRequest, _rsp *
 		Network:          _req.Device.Network,
 		NetworkStrength:  _req.Device.NetworkStrength,
 		Program:          program,
+		Healthy:          3,
 	}
 	guardUUID := model.ToGuardUUID(_req.Domain, deviceUUID)
 	guard := &cache.Guard{
@@ -139,6 +141,7 @@ func (this *Sync) Push(_ctx context.Context, _req *proto.SyncPushRequest, _rsp *
 
 func (this *Sync) Pull(_ctx context.Context, _req *proto.SyncPullRequest, _rsp *proto.SyncPullResponse) error {
 	logger.Infof("Received Sync.Pull request: %v", _req)
+
 	_rsp.Status = &proto.Status{}
 
 	if "" == _req.Domain {
@@ -158,6 +161,7 @@ func (this *Sync) Pull(_ctx context.Context, _req *proto.SyncPullRequest, _rsp *
 
 	_rsp.Device = make([]*proto.DeviceEntity, 0)
 	_rsp.Alias = make(map[string]string)
+	_rsp.Healthy = make(map[string]int32)
 	idx := 0
 	for guardUUID, deviceUUID := range guardMap {
 		guard, err := caoGuard.Get(guardUUID)
@@ -194,6 +198,8 @@ func (this *Sync) Pull(_ctx context.Context, _req *proto.SyncPullRequest, _rsp *
 			Program:          device.Program,
 		})
 		_rsp.Alias[deviceUUID] = guard.Model.Alias
+
+		_rsp.Healthy[deviceUUID] = device.Healthy
 		idx = idx + 1
 	}
 
@@ -209,9 +215,46 @@ func (this *Sync) Pull(_ctx context.Context, _req *proto.SyncPullRequest, _rsp *
 		for _, k := range _req.DownProperty {
 			if v, ok := domain.Property[k]; ok {
 				_rsp.Property[k] = v
+                // 文件拉取后置空
+				if strings.HasPrefix(k, "file://") {
+					domain.Property[k] = ""
+				}
 			}
 		}
 	}
 
+	return nil
+}
+
+func (this *Sync) Upload(_ctx context.Context, _req *proto.SyncUploadRequest, _rsp *proto.BlankResponse) error {
+	logger.Infof("Received Sync.Upload request: name:%v, size:%v", _req.Name, len(_req.Data))
+	_rsp.Status = &proto.Status{}
+
+	if "" == _req.Domain {
+		_rsp.Status.Code = 1
+		_rsp.Status.Message = "domain is required"
+		return nil
+	}
+
+	if "" == _req.Device {
+		_rsp.Status.Code = 1
+		_rsp.Status.Message = "device is required"
+		return nil
+	}
+	if "" == _req.Name {
+		_rsp.Status.Code = 1
+		_rsp.Status.Message = "name is required"
+		return nil
+	}
+
+	caoDomain := cache.NewDomainCAO()
+	domain, err := caoDomain.Get(_req.Domain)
+	if nil != err {
+		_rsp.Status.Code = -1
+		_rsp.Status.Message = err.Error()
+		return nil
+	}
+
+	domain.Property["file://"+_req.Device+"/"+_req.Name] = _req.Data
 	return nil
 }

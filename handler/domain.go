@@ -12,7 +12,7 @@ import (
 
 type Domain struct{}
 
-func (this *Domain) Create(_ctx context.Context, _req *proto.DomainCreateRequest, _rsp *proto.BlankResponse) error {
+func (this *Domain) Create(_ctx context.Context, _req *proto.DomainCreateRequest, _rsp *proto.UuidResponse) error {
 	logger.Infof("Received Domain.Create request: %v", _req)
 	_rsp.Status = &proto.Status{}
 
@@ -40,10 +40,11 @@ func (this *Domain) Create(_ctx context.Context, _req *proto.DomainCreateRequest
 		return nil
 	}
 
+    _rsp.Uuid = domain.UUID
 	return nil
 }
 
-func (this *Domain) Delete(_ctx context.Context, _req *proto.DomainDeleteRequest, _rsp *proto.BlankResponse) error {
+func (this *Domain) Delete(_ctx context.Context, _req *proto.DomainDeleteRequest, _rsp *proto.UuidResponse) error {
 	logger.Infof("Received Domain.Delete request: %v", _req)
 	_rsp.Status = &proto.Status{}
 
@@ -61,6 +62,7 @@ func (this *Domain) Delete(_ctx context.Context, _req *proto.DomainDeleteRequest
 		return nil
 	}
 
+    _rsp.Uuid = _req.Uuid
 	return nil
 }
 
@@ -68,8 +70,46 @@ func (this *Domain) Find(_ctx context.Context, _req *proto.DomainFindRequest, _r
 	logger.Infof("Received Domain.Find request: %v", _req)
 	_rsp.Status = &proto.Status{}
 
+	if "" == _req.Name{
+		_rsp.Status.Code = 1
+		_rsp.Status.Message = "name is required"
+		return nil
+	}
+
 	dao := model.NewDomainDAO(nil)
 	domain, err := dao.FindByName(_req.Name)
+	if nil != err {
+		_rsp.Status.Code = -1
+		_rsp.Status.Message = err.Error()
+		return nil
+	}
+
+	if nil == domain {
+		_rsp.Status.Code = 1
+		_rsp.Status.Message = "domain not found"
+		return nil
+	}
+
+	_rsp.Domain = &proto.DomainEntity{
+		Uuid: domain.UUID,
+		Name: domain.Name,
+	}
+
+	return nil
+}
+
+func (this *Domain) Get(_ctx context.Context, _req *proto.DomainGetRequest, _rsp *proto.DomainGetResponse) error {
+	logger.Infof("Received Domain.Get request: %v", _req)
+	_rsp.Status = &proto.Status{}
+
+	if "" == _req.Uuid{
+		_rsp.Status.Code = 1
+		_rsp.Status.Message = "uuid is required"
+		return nil
+	}
+
+	dao := model.NewDomainDAO(nil)
+	domain, err := dao.Get(_req.Uuid)
 	if nil != err {
 		_rsp.Status.Code = -1
 		_rsp.Status.Message = err.Error()
@@ -158,7 +198,7 @@ func (this *Domain) Search(_ctx context.Context, _req *proto.DomainSearchRequest
 	return nil
 }
 
-func (this *Domain) Update(_ctx context.Context, _req *proto.DomainUpdateRequest, _rsp *proto.BlankResponse) error {
+func (this *Domain) Update(_ctx context.Context, _req *proto.DomainUpdateRequest, _rsp *proto.UuidResponse) error {
 	logger.Infof("Received Domain.Update request: %v", _req)
 	_rsp.Status = &proto.Status{}
 
@@ -182,6 +222,7 @@ func (this *Domain) Update(_ctx context.Context, _req *proto.DomainUpdateRequest
 		return nil
 	}
 
+    _rsp.Uuid = _req.Uuid
 	return nil
 }
 

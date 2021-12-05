@@ -15,6 +15,7 @@ type Device struct {
 	Network          string            // 网络类型
 	NetworkStrength  int32             // 网络强度
 	Program          map[string]string // 程序信息<程序名，程序版本>
+	Healthy          int32             // 健康值
 }
 
 //TODO use redis/memory

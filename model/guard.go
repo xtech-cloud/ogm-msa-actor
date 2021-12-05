@@ -8,9 +8,7 @@ import (
 
 type Guard struct {
 	UUID       string `gorm:"column:uuid;type:char(32);primaryKey"`
-	Domain     Domain `gorm:"ForeignKey:DomainUUID;AssociationForeignKey:uuid"`
 	DomainUUID string `gorm:"column:domain_uuid;type:char(32);not null"`
-	Device     Device `gorm:"ForeignKey:DeviceUUID;AssociationForeignKey:uuid"`
 	DeviceUUID string `gorm:"column:device_uuid;type:char(32);not null"`
     Alias      string `gorm:"column:alias;type:varchar(128);not null;default:''"`
 	Access     int32  `gorm:"column:access;type:tinyint;not null;default:0"`

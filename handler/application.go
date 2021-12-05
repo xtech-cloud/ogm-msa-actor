@@ -12,6 +12,42 @@ import (
 
 type Application struct{}
 
+func (this *Application) Get(_ctx context.Context, _req *proto.ApplicationGetRequest, _rsp *proto.ApplicationGetResponse) error {
+	logger.Infof("Received Application.Get request: %v", _req)
+	_rsp.Status = &proto.Status{}
+
+	if "" == _req.Uuid {
+		_rsp.Status.Code = 1
+		_rsp.Status.Message = "uuid is required"
+		return nil
+	}
+
+	dao := model.NewApplicationDAO(nil)
+	application, err := dao.Get(_req.Uuid)
+	if nil != err {
+		_rsp.Status.Code = -1
+		_rsp.Status.Message = err.Error()
+		return nil
+	}
+
+	if nil == application {
+		_rsp.Status.Code = 2
+		_rsp.Status.Message = "not found"
+		return nil
+	}
+
+	_rsp.Application = &proto.ApplicationEntity{
+		Uuid:     application.UUID,
+		Name:     application.Name,
+		Version:  application.Version,
+		Program:  application.Program,
+		Location: application.Location,
+		Url:      application.Url,
+		Upgrade:  application.Upgrade,
+	}
+	return nil
+}
+
 func (this *Application) List(_ctx context.Context, _req *proto.ApplicationListRequest, _rsp *proto.ApplicationListResponse) error {
 	logger.Infof("Received Application.List request: %v", _req)
 	_rsp.Status = &proto.Status{}
@@ -46,7 +82,7 @@ func (this *Application) List(_ctx context.Context, _req *proto.ApplicationListR
 	return nil
 }
 
-func (this *Application) Update(_ctx context.Context, _req *proto.ApplicationUpdateRequest, _rsp *proto.BlankResponse) error {
+func (this *Application) Update(_ctx context.Context, _req *proto.ApplicationUpdateRequest, _rsp *proto.UuidResponse) error {
 	logger.Infof("Received Application.Update request: %v", _req)
 	_rsp.Status = &proto.Status{}
 
@@ -111,10 +147,12 @@ func (this *Application) Update(_ctx context.Context, _req *proto.ApplicationUpd
 
 	cao := cache.NewApplicationCAO()
 	cao.Reload(domainUUID)
+
+	_rsp.Uuid = _req.Uuid
 	return nil
 }
 
-func (this *Application) Add(_ctx context.Context, _req *proto.ApplicationAddRequest, _rsp *proto.BlankResponse) error {
+func (this *Application) Add(_ctx context.Context, _req *proto.ApplicationAddRequest, _rsp *proto.UuidResponse) error {
 	logger.Infof("Received Application.Add request: %v", _req)
 	_rsp.Status = &proto.Status{}
 
@@ -174,10 +212,12 @@ func (this *Application) Add(_ctx context.Context, _req *proto.ApplicationAddReq
 
 	cao := cache.NewApplicationCAO()
 	cao.Reload(_req.Domain)
+
+	_rsp.Uuid = application.UUID
 	return nil
 }
 
-func (this *Application) Remove(_ctx context.Context, _req *proto.ApplicationRemoveRequest, _rsp *proto.BlankResponse) error {
+func (this *Application) Remove(_ctx context.Context, _req *proto.ApplicationRemoveRequest, _rsp *proto.UuidResponse) error {
 	logger.Infof("Received Applicaton.Remove request: %v", _req)
 	_rsp.Status = &proto.Status{}
 
@@ -200,5 +240,7 @@ func (this *Application) Remove(_ctx context.Context, _req *proto.ApplicationRem
 	}
 	cao := cache.NewApplicationCAO()
 	cao.Reload(domainUUID)
+
+	_rsp.Uuid = _req.Uuid
 	return nil
 }

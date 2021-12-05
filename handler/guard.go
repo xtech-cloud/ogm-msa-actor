@@ -24,6 +24,8 @@ func (this *Guard) Fetch(_ctx context.Context, _req *proto.GuardFetchRequest, _r
 
 	daoJoin := model.NewJoinDAO(nil)
 	device, err := daoJoin.ListDeviceByDomain(_req.Domain)
+
+	logger.Infof("count request: %v", len(device))
 	if nil != err {
 		_rsp.Status.Code = -1
 		_rsp.Status.Message = err.Error()

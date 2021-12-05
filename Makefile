@@ -42,10 +42,6 @@ call:
 post:
 	curl -X POST -H 'Content-Type:application/json' -d '{"msg":"hello"}' localhost/ogm/actor/Healthy/Echo
 
-.PHONY: benchmark
-benchmark:
-	python3 ./benchmark.py
-
 .PHONY: dist
 dist:
 	rm -rf ./dist

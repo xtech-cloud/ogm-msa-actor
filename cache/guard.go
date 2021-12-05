@@ -79,7 +79,7 @@ func (this *GuardCAO) Save(_guard *Guard) (*Guard, error) {
 		guardUUID_guard_map[_guard.Model.UUID] = _guard
 	}
 
-	return guardUUID_guard_map[_guard.Model.UUID] ,nil
+	return guardUUID_guard_map[_guard.Model.UUID], nil
 }
 
 func (this *GuardCAO) Load(_uuid string) error {

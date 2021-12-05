@@ -20,7 +20,7 @@ func (this *JoinDAO) ListDeviceByDomain(_uuid string) ([]Device, error) {
 	db := this.conn.DB
 	var device []Device
 	subQuery1 := db.Model(&Device{})
-	subQuery2 := db.Model(&Guard{}).Select("device_uuid").Where("domain_uuid = ?", _uuid)
-	res := db.Table("(?) as d, (?) as p", subQuery1, subQuery2).Find(&device)
+	subQuery2 := db.Model(&Guard{})
+	res := db.Table("(?) as d, (?) as g", subQuery1, subQuery2).Select("d.*").Where("g.domain_uuid = ? AND g.device_uuid = d.uuid", _uuid).Find(&device)
 	return device, res.Error
 }
